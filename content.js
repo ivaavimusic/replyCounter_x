@@ -159,19 +159,13 @@
 
     document.body.appendChild(counterElement);
 
-    // Click bubble to expand
-    bubbleContent.addEventListener('click', (e) => {
-      e.stopPropagation();
-      expandCounter();
-    });
-
     // Minimize button to collapse back to bubble
     minimizeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       collapseCounter();
     });
 
-    makeDraggable(counterElement);
+    makeDraggable(counterElement, bubbleContent);
     loadPosition();
 
     // Theme observer
@@ -197,10 +191,11 @@
   }
 
   // Make element draggable
-  function makeDraggable(element) {
+  function makeDraggable(element, bubbleContent) {
     let isDragging = false;
     let startX, startY, initialX, initialY;
     let hasMoved = false;
+    let dragPrevented = false;
 
     const startDrag = (e) => {
       // For expanded mode, only allow dragging from header
@@ -231,7 +226,7 @@
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
         hasMoved = true;
       }
 
@@ -250,8 +245,20 @@
         element.classList.remove('xrc-dragging');
         if (hasMoved) {
           savePosition();
+          dragPrevented = true;
+          setTimeout(() => { dragPrevented = false; }, 50);
         }
       }
+    });
+
+    // Click bubble to expand (only if not dragging)
+    bubbleContent.addEventListener('click', (e) => {
+      if (dragPrevented || hasMoved) {
+        e.stopPropagation();
+        return;
+      }
+      e.stopPropagation();
+      expandCounter();
     });
   }
 
