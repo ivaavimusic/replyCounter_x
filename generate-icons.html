@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generate Extension Icons - X Reply Counter</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { color: #e7e9ea; margin-bottom: 10px; }
+    .subtitle { color: #71767b; margin-bottom: 30px; }
+    .icons { display: flex; gap: 24px; justify-content: center; margin: 30px 0; flex-wrap: wrap; }
+    .icon-item { background: #16181c; padding: 24px; border-radius: 16px; border: 1px solid #2f3336; }
+    .icon-item p { margin-top: 12px; color: #71767b; font-weight: 600; }
+    canvas { display: block; margin: 0 auto; }
+    button {
+      background: #e7e9ea;
+      color: #000;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #d6d9db; }
+    .instructions {
+      background: #16181c;
+      padding: 24px;
+      border-radius: 16px;
+      margin-top: 30px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #2f3336;
+    }
+    .instructions h3 { color: #e7e9ea; margin-bottom: 12px; }
+    .instructions ol { padding-left: 20px; line-height: 2; color: #a0a0a0; }
+    code { background: #2f3336; padding: 3px 8px; border-radius: 6px; font-size: 13px; }
+    .preview-large { margin: 30px 0; }
+    .preview-large canvas { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+  </style>
+</head>
+<body>
+  <h1>X Reply Counter</h1>
+  <p class="subtitle">Minimal Icon Generator</p>
+
+  <div class="preview-large">
+    <canvas id="previewCanvas" width="256" height="256"></canvas>
+  </div>
+
+  <div class="icons" id="iconsContainer"></div>
+
+  <button id="downloadAll">Download All Icons</button>
+
+  <div class="instructions">
+    <h3>After downloading:</h3>
+    <ol>
+      <li>Move downloaded icons to the <code>icons/</code> folder</li>
+      <li>Files: <code>icon16.png</code>, <code>icon32.png</code>, <code>icon48.png</code>, <code>icon128.png</code></li>
+      <li>Reload the extension in <code>chrome://extensions</code></li>
+    </ol>
+  </div>
+
+  <script>
+    const sizes = [16, 32, 48, 128];
+    const canvases = {};
+
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+
+      // Clear
+      ctx.clearRect(0, 0, size, size);
+
+      // Black circle background - fills entire canvas
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // X logo - BIGGER, fills more of the circle
+      // Logo takes up ~70% of the circle
+      const logoScale = 0.65;
+      const logoSize = size * logoScale;
+      const logoX = (size - logoSize) / 2;
+      const logoY = (size - logoSize) / 2 - (size * 0.02); // Slightly up for badge
+
+      ctx.fillStyle = '#ffffff';
+      ctx.save();
+      ctx.translate(logoX, logoY);
+      ctx.scale(logoSize / 24, logoSize / 24);
+
+      // X logo path (official X/Twitter logo)
+      ctx.beginPath();
+      ctx.moveTo(18.244, 2.25);
+      ctx.lineTo(21.552, 2.25);
+      ctx.lineTo(14.325, 10.51);
+      ctx.lineTo(22.827, 21.75);
+      ctx.lineTo(16.17, 21.75);
+      ctx.lineTo(10.956, 14.933);
+      ctx.lineTo(4.99, 21.75);
+      ctx.lineTo(1.68, 21.75);
+      ctx.lineTo(9.41, 12.915);
+      ctx.lineTo(1.254, 2.25);
+      ctx.lineTo(8.08, 2.25);
+      ctx.lineTo(12.793, 8.481);
+      ctx.closePath();
+      ctx.moveTo(17.083, 19.77);
+      ctx.lineTo(18.916, 19.77);
+      ctx.lineTo(7.084, 4.126);
+      ctx.lineTo(5.117, 4.126);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Counter badge at bottom-right (like the reference)
+      if (size >= 32) {
+        const badgeHeight = size * 0.32;
+        const badgeWidth = size * 0.52;
+        const badgeX = size - badgeWidth - (size * 0.02);
+        const badgeY = size - badgeHeight - (size * 0.02);
+        const badgeRadius = badgeHeight / 2;
+
+        // Badge shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = size * 0.04;
+        ctx.shadowOffsetY = size * 0.02;
+
+        // Badge background - blue pill shape
+        ctx.fillStyle = '#1d9bf0';
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius);
+        ctx.fill();
+
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Badge text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${badgeHeight * 0.55}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('99+', badgeX + badgeWidth / 2, badgeY + badgeHeight / 2 + 1);
+      }
+    }
+
+    // Draw preview
+    const previewCanvas = document.getElementById('previewCanvas');
+    drawIcon(previewCanvas, 256);
+
+    // Create canvases for each size
+    const container = document.getElementById('iconsContainer');
+    sizes.forEach(size => {
+      const div = document.createElement('div');
+      div.className = 'icon-item';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      canvases[size] = canvas;
+
+      drawIcon(canvas, size);
+
+      const label = document.createElement('p');
+      label.textContent = `${size}x${size}`;
+
+      div.appendChild(canvas);
+      div.appendChild(label);
+      container.appendChild(div);
+    });
+
+    // Download functionality
+    document.getElementById('downloadAll').addEventListener('click', () => {
+      sizes.forEach((size, index) => {
+        setTimeout(() => {
+          const canvas = canvases[size];
+          const link = document.createElement('a');
+          link.download = `icon${size}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }, index * 200);
+      });
+    });
+  </script>
+</body>
+</html>
