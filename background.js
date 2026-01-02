@@ -169,14 +169,24 @@ async function incrementCounter() {
 // Listen for messages
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_COUNT') {
-    chrome.storage.local.get(['todayCount', 'todayDate', 'dailyTarget', 'counterEnabled']).then(data => {
+    chrome.storage.local.get(['todayCount', 'todayDate', 'dailyTarget', 'counterEnabled', 'stats']).then(data => {
       const todayKey = getTodayKey();
+      const monthKey = getMonthKey();
+      const dayOfMonth = new Date().getDate().toString();
       let count = data.todayCount || 0;
+      let stats = data.stats || {};
 
       // Reset if it's a new day
       if (data.todayDate !== todayKey) {
         count = 0;
         chrome.storage.local.set({ todayCount: 0, todayDate: todayKey });
+      } else {
+        // Sync with stats if they differ (stats is source of truth)
+        const statsCount = stats[monthKey]?.[dayOfMonth] || 0;
+        if (statsCount > count) {
+          count = statsCount;
+          chrome.storage.local.set({ todayCount: count });
+        }
       }
 
       sendResponse({
