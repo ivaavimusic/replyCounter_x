@@ -28,22 +28,22 @@
 
 /* Dark Theme (default) */
 #x-reply-counter[data-theme="dark"] {
-  background: #16181c;
-  border: 1px solid #2f3336;
+  background: #000000;
+  border: none;
   color: #e7e9ea;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 20px 2px rgba(255, 255, 255, 0.1);
 }
 
 #x-reply-counter[data-theme="dark"]:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 25px 4px rgba(255, 255, 255, 0.15);
 }
 
 #x-reply-counter[data-theme="dark"].xrc-bubble:hover {
-  background: #1d1f23;
+  background: #16181c;
 }
 
 #x-reply-counter[data-theme="dark"] .xrc-header {
-  background: #1d1f23;
+  background: #000000;
   border-bottom: 1px solid #2f3336;
 }
 
@@ -74,7 +74,7 @@
 }
 
 #x-reply-counter[data-theme="dark"] .xrc-bubble-content {
-  background: #16181c;
+  background: #000000;
 }
 
 /* Light Theme */
